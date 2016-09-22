@@ -25,9 +25,24 @@ class Word {
 class Sequence {
 	List<Word> words;
 	float p;
+
 	public Sequence(List<Word> words, float p){
 		words = words;
 		p = p;
+	}
+
+	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
+		Sequence ns = new Sequence(s.words.add(new Word(word, partOfSpeech)),
+								   s.p * probability);
+		return ns;
+	}
+
+	Boolean isValidSentence(Sequence s, List<String> sentenceSpec){
+		if (s.words.size() != sentenceSpec.size()) return false;
+		for (int i = 0; i < s.words.size(); i++){
+			if (s.words.get(i).spec != sentenceSpec.get(i)) return false;
+		}
+		return true;
 	}
 }
 
@@ -60,13 +75,5 @@ public class generate {
 	    parse(graph);
 
 	    
-	}
-
-	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
-		s.words.add(new Word(word, partOfSpeech));
-		s.p = s.p * probability;
-		return s;
-	}
-
-	
+	}	
 }
