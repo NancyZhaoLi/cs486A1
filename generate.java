@@ -25,17 +25,34 @@ class Word {
 class Sequence {
 	List<Word> words;
 	float p;
+
 	public Sequence(List<Word> words, float p){
 		words = words;
 		p = p;
 	}
+
 	Word lastWord(){
 		return this.words.get(this.words.size()-1);
 	}
+
 	Sequence sequenceByAppendingWord(Word w, float p){
 		List<Word> newWords = new ArrayList<Word>(this.words);
 		newWords.add(w);
 		return new Sequence(newWords, this.p * p);
+	}
+
+	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
+		Sequence ns = new Sequence(s.words.add(new Word(word, partOfSpeech)),
+								   s.p * probability);
+		return ns;
+	}
+
+	Boolean isValidSentence(Sequence s, List<String> sentenceSpec){
+		if (s.words.size() != sentenceSpec.size()) return false;
+		for (int i = 0; i < s.words.size(); i++){
+			if (s.words.get(i).spec != sentenceSpec.get(i)) return false;
+		}
+		return true;
 	}
 }
 
@@ -111,5 +128,4 @@ class SentenceGenerator {
 		return s;
 	}
 
-	
 }
