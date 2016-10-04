@@ -36,6 +36,7 @@ class Sequence {
 		for (Word m : words) a = a + m.w + " ";
 		return a.trim();
 	}
+
 	Boolean isValidSentence(Sequence s, List<String> sentenceSpec){
 		if (s.words.size() != sentenceSpec.size()) return false;
 		for (int i = 0; i < s.words.size(); i++){
@@ -49,7 +50,7 @@ class SentenceGenerator {
 	public static void main(String[] args) {
 		try{
 			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(generate("hans", Arrays.asList("NNP","VBD","DT", "NN"), "bfs", input));
+			System.out.println(generate("hans", Arrays.asList("NNP","VBD","DT", "NN"), "dfs", input));
 		}catch(IOException e){
 		  e.printStackTrace();
 		}
@@ -86,7 +87,6 @@ class SentenceGenerator {
 	private static String bfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
-		Word sec = new Word(startingWord, sentenceSpec.get(0));
 		Sequence best = new Sequence(Arrays.asList(first), 0);
 		
 		Queue<Sequence> q = new LinkedList<Sequence>();
@@ -111,161 +111,17 @@ class SentenceGenerator {
 	}
 
 	private static String dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+		int visitedNodes = 1;
+		Word first = new Word(startingWord, sentenceSpec.get(0));
+		Stack<Word> s = new Stack<Word>();
+		s.add(first);
+		while (!s.isEmpty()){
+			s.pop();
+		}
 		return "";
 	}
 
 	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
 		return "";
 	}
-
-
-		
-		
-		
-			/*
-			// a word map to a two word sequence with probability
-			Map<Word, List<Sequence>> inputMap = new LinkedHashMap<Word, List<Sequence>>() {
-				public List<Sequence> get(Word key) {
-				    List<Sequence> list = super.get(key);
-				    if (list == null && key instanceof Word)
-		)		       super.put(key, list = new ArrayList<Sequence>());
-		    return list;
-		}
-	};
-	ArrayDeque<Sequence> processing = new ArrayDeque<Sequence>();
-
-	public static void main(String[] args) {
-		SentenceGenerator sg = new SentenceGenerator();
-		try{
-			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT", "NN"), "bfs", input));
-		}catch(IOException e){
-		  e.printStackTrace();
-		}
-	}
-
-	void parse(String input, String startingWord){
-		String[] lines = input.split("\\n");
-		for (int i = 0; i < lines.length; i++){
-		    String[] parts = lines[i].split("\\\\\\\\");
-		    // System.out.println(parts);
-		    String[] startWord = parts[0].split("\\\\");
-		    String[] endWord = parts[1].split("\\\\");
-		    Float p = Float.parseFloat(parts[2]);
-		    Word headWord = new Word(startWord[0],startWord[1]);
-		    if (this.processing.size() == 0 && headWord.w == startingWord) {
-		    	this.processing.add(new Sequence(Arrays.asList(headWord), 1));
-		    }
-		    Word endingWord = new Word(endWord[0],endWord[1]);
-			this.inputMap.get(headWord).add(new Sequence(Arrays.asList(headWord, endingWord), p));
-		}
-	}
-
-	String generate(String startingWord, List<String> sentenceSpec, 
-					String searchStrategy, String graph){
-	    parse(graph, startingWord);
-
-	    while( this.processing.getFirst().words.size() != sentenceSpec.size() ){
-	    	Sequence current = this.processing.pollFirst();
-	    	Word lastWord = current.lastWord();
-	    	List<Sequence> nextWords = this.inputMap.get(lastWord);
-	    	for(Sequence wordSeq : nextWords) {
-		    	this.processing.add(current.sequenceByAppendingWord(wordSeq.lastWord(), wordSeq.p));
-			}
-	    }
-
-	    Sequence maxSeq = new Sequence(new ArrayList<Word>(), 0);
-	    for(Sequence wordSeq : this.processing) {
-	    	if (wordSeq.p > maxSeq.p){
-				maxSeq = wordSeq;
-	    	}
-		}
-
-		String rtn = "";
-	    for (Word w : maxSeq.words) {
-	    	rtn = rtn + " " + w.w;
-	    }
-	    return rtn.substring(0, rtn.length()-1 );
-	}
-
-	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
-		s.words.add(new Word(word, partOfSpeech));
-		s.p = s.p * probability;
-		return s;
-	}*/
-
 }
-/*
-class SentenceGenerator {
-	// a word map to a two word sequence with probability
-	Map<Word, List<Sequence>> inputMap = new LinkedHashMap<Word, List<Sequence>>() {
-		public List<Sequence> get(Word key) {
-		    List<Sequence> list = super.get(key);
-		    if (list == null && key instanceof Word)
-		       super.put(key, list = new ArrayList<Sequence>());
-		    return list;
-		}
-	};
-	ArrayDeque<Sequence> processing = new ArrayDeque<Sequence>();
-
-	public static void main(String[] args) {
-		SentenceGenerator sg = new SentenceGenerator();
-		try{
-			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT", "NN"), "bfs", input));
-		}catch(IOException e){
-		  e.printStackTrace();
-		}
-	}
-
-	void parse(String input, String startingWord){
-		String[] lines = input.split("\\n");
-		for (int i = 0; i < lines.length; i++){
-		    String[] parts = lines[i].split("\\\\\\\\");
-		    // System.out.println(parts);
-		    String[] startWord = parts[0].split("\\\\");
-		    String[] endWord = parts[1].split("\\\\");
-		    Float p = Float.parseFloat(parts[2]);
-		    Word headWord = new Word(startWord[0],startWord[1]);
-		    if (this.processing.size() == 0 && headWord.w == startingWord) {
-		    	this.processing.add(new Sequence(Arrays.asList(headWord), 1));
-		    }
-		    Word endingWord = new Word(endWord[0],endWord[1]);
-			this.inputMap.get(headWord).add(new Sequence(Arrays.asList(headWord, endingWord), p));
-		}
-	}
-
-	String generate(String startingWord, List<String> sentenceSpec, 
-					String searchStrategy, String graph){
-	    parse(graph, startingWord);
-
-	    while( this.processing.getFirst().words.size() != sentenceSpec.size() ){
-	    	Sequence current = this.processing.pollFirst();
-	    	Word lastWord = current.lastWord();
-	    	List<Sequence> nextWords = this.inputMap.get(lastWord);
-	    	for(Sequence wordSeq : nextWords) {
-		    	this.processing.add(current.sequenceByAppendingWord(wordSeq.lastWord(), wordSeq.p));
-			}
-	    }
-
-	    Sequence maxSeq = new Sequence(new ArrayList<Word>(), 0);
-	    for(Sequence wordSeq : this.processing) {
-	    	if (wordSeq.p > maxSeq.p){
-				maxSeq = wordSeq;
-	    	}
-		}
-
-		String rtn = "";
-	    for (Word w : maxSeq.words) {
-	    	rtn = rtn + " " + w.w;
-	    }
-	    return rtn.substring(0, rtn.length()-1 );
-	}
-
-	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
-		s.words.add(new Word(word, partOfSpeech));
-		s.p = s.p * probability;
-		return s;
-	}
-
-}*/
