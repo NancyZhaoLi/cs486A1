@@ -8,17 +8,6 @@ class Word {
 	public Word(String w, String spec){
 		this.w = w;this.spec = spec;
 	}
-    public int hashCode() {
-    	return w.hashCode() + spec.hashCode();
-    }
-    public boolean equals(Object other) {
-    	if (other instanceof Word) {
-    		Word otherWord = (Word) other;
-    		return this.w == otherWord.w && this.spec == otherWord.spec;
-    	}
-
-    	return false;
-    }
 }
 
 class Sequence {
@@ -30,6 +19,8 @@ class Sequence {
 		this.p = p;
 	}
 
+	int length(){return this.words.size();}
+
 	Word firstWord(){return this.words.get(0);}
 
 	Word lastWord(){return this.words.get(this.words.size()-1);}
@@ -39,13 +30,12 @@ class Sequence {
 		newWords.add(w);
 		return new Sequence(newWords, this.p * p);
 	}
-/*
-	Sequence addWordToSequence(Sequence s, String word, String partOfSpeech, float probability) {
-		Sequence ns = new Sequence(s.words.add(new Word(word, partOfSpeech)),
-								   s.p * probability);
-		return ns;
+
+	String toStr(){
+		String a = "";
+		for (Word m : words) a = a + m.w + " ";
+		return a.trim();
 	}
-*/
 	Boolean isValidSentence(Sequence s, List<String> sentenceSpec){
 		if (s.words.size() != sentenceSpec.size()) return false;
 		for (int i = 0; i < s.words.size(); i++){
@@ -59,7 +49,7 @@ class SentenceGenerator {
 	public static void main(String[] args) {
 		try{
 			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(generate("benjamin", Arrays.asList("NNP","VBD","DT", "NN"), "bfs", input));
+			System.out.println(generate("hans", Arrays.asList("NNP","VBD","DT", "NN"), "bfs", input));
 		}catch(IOException e){
 		  e.printStackTrace();
 		}
@@ -68,13 +58,13 @@ class SentenceGenerator {
 	private static String generate(String startingWord, List<String> sentenceSpec, 
 								   String searchStrategy, String graph){
 		List<Sequence> input = parse(graph);
+		String s = "";
 		switch (searchStrategy) {
-			case "bfs": bfs(startingWord, sentenceSpec, input);
-			case "dfs": dfs(startingWord, sentenceSpec, input);
-			case "hs": hs(startingWord, sentenceSpec, input);
-			default: bfs(startingWord, sentenceSpec, input);
+			case "bfs": s = bfs(startingWord, sentenceSpec, input); break;
+			case "dfs": s = dfs(startingWord, sentenceSpec, input); break;
+			case "hs": s = hs(startingWord, sentenceSpec, input); break;
 		}
-		return "";	
+		return s;	
 	}      
 
 	private static List<Sequence> parse(String input){
@@ -93,30 +83,39 @@ class SentenceGenerator {
 		return pi;
 	}
 
-	private static Sequence bfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
-		int VisitedNodes = 1;
+	private static String bfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
+		Word sec = new Word(startingWord, sentenceSpec.get(0));
 		Sequence best = new Sequence(Arrays.asList(first), 0);
 		
 		Queue<Sequence> q = new LinkedList<Sequence>();
 		q.add(new Sequence(Arrays.asList(first), 1));
 		while (!q.isEmpty()){
-
-
-			q.remove();
-			System.out.println(q.size());
+			Sequence current = q.remove();
+			if ((current.length() == sentenceSpec.size()) && (current.p >= best.p)) best = current;
+			else {
+				for (Sequence m : input){
+					if (current.lastWord().w.equals(m.firstWord().w) &&
+						current.lastWord().spec.equals(m.firstWord().spec) &&
+						m.lastWord().spec.equals(sentenceSpec.get(current.length()))) {
+							Sequence newSeq = current.sequenceByAppendingWord(m.lastWord(), m.p);
+							if (newSeq.length() < sentenceSpec.size()) q.add(newSeq);
+							else if (newSeq.p > best.p) best = newSeq;
+					}
+					visitedNodes++;
+				}
+			}
 		}
-
-
-		return best;
+		return "\""+best.toStr()+"\" with probability:"+best.p+" total nodes cosidered: "+visitedNodes;
 	}
 
-	private static Sequence dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
-		return input.get(0);
+	private static String dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+		return "";
 	}
 
-	private static Sequence hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
-		return input.get(0);
+	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+		return "";
 	}
 
 
