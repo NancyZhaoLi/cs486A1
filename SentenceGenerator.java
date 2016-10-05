@@ -157,9 +157,39 @@ class SentenceGenerator {
 		return rt+"\" with probability:"+maxP+" total nodes cosidered: "+visitedNodes;
 	}
 
+	private class HeuristicEntry {
+		
+	}
+	private class HeuristicComparator implements Comparator<String>{
+	    @Override
+	    public int compare(String x, String y) {
+	        // Assume neither string is null. Real code should
+	        // probably be more robust
+	        // You could also just return x.length() - y.length(),
+	        // which would be more efficient.
+	        if (x.length() < y.length())
+	        {
+	            return -1;
+	        }
+	        if (x.length() > y.length())
+	        {
+	            return 1;
+	        }
+	        return 0;
+	    }
+	}
 	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
+
+		Comparator<String> comparator = new StringLengthComparator();
+        PriorityQueue<String> queue = new PriorityQueue<String>(10, comparator);
+        queue.add("short");
+        queue.add("very long indeed");
+        queue.add("medium");
+        while (queue.size() != 0) {
+            System.out.println(queue.remove());
+        }
 		return "";
 	}
 }
