@@ -5,8 +5,11 @@ import java.nio.file.*;
 class Word {
 	String w;
 	String spec;
+
+	//For DFS
 	int dfsLoc;
 	float dfsP;
+
 	public Word(String w, String spec){
 		this.w = w;this.spec = spec;this.dfsLoc=0;this.dfsP=1;
 	}
@@ -155,6 +158,8 @@ class SentenceGenerator {
 	}
 
 	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+		int visitedNodes = 1;
+		Word first = new Word(startingWord, sentenceSpec.get(0));
 		return "";
 	}
 }
