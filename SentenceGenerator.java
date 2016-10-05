@@ -115,9 +115,9 @@ class SentenceGenerator {
 	private static String dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
-		Stack<Word> maxS;
-		float maxP = 0;
 		Stack<Word> s = new Stack<Word>();
+		Stack<Word> maxS = s;
+		float maxP = 0;
 		s.add(first);
 		
 		while (!s.isEmpty()){
@@ -129,9 +129,10 @@ class SentenceGenerator {
 						if (m.w.equals(ith.firstWord().w) && m.spec.equals(ith.firstWord().spec) &&
 							ith.lastWord().spec.equals(sentenceSpec.get(s.size()+1))){
 							m.dfsLoc = i+1;
-						    m.dfsP *= ith.p;
+						    m.dfsP = ith.p;
 							s.add(m);
 							s.add(ith.lastWord());
+							visitedNodes++;
 							break;
 						}
 					}
@@ -140,19 +141,17 @@ class SentenceGenerator {
 			else {
 				float p = 1;
 				for (Word w: s){p*=w.dfsP;}
-				//System.out.println(p);
+				
 				if (Float.compare(maxP, p) < 0) {
 					maxP = p;
-					maxS = s;
-					System.out.println(maxP);
-					for (Word w: s)System.out.println(w.w);
+					maxS = (Stack<Word>)s.clone();
 				}
-				break;
+				s.pop();
 			}
-			//s.pop();
-			//for ()
 		}
-		return "";
+		String rt = "\"";
+		for (Word w: maxS) rt = rt+w.w+" ";
+		return rt+"\" with probability:"+maxP+" total nodes cosidered: "+visitedNodes;
 	}
 
 	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
