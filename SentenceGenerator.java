@@ -64,7 +64,7 @@ class SentenceGenerator {
 	private static String generate(String startingWord, List<String> sentenceSpec, 
 								   String searchStrategy, String graph){
 		List<Sequence> input = parse(graph);
-		String s = "";
+		String s = "Failed to generate";
 		switch (searchStrategy) {
 			case "bfs": s = bfs(startingWord, sentenceSpec, input); break;
 			case "dfs": s = dfs(startingWord, sentenceSpec, input); break;
