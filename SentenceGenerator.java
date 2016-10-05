@@ -5,8 +5,10 @@ import java.nio.file.*;
 class Word {
 	String w;
 	String spec;
+	int dfsLoc;
+	float dfsP;
 	public Word(String w, String spec){
-		this.w = w;this.spec = spec;
+		this.w = w;this.spec = spec;this.dfsLoc=0;this.dfsP=1;
 	}
 }
 
@@ -50,7 +52,7 @@ class SentenceGenerator {
 	public static void main(String[] args) {
 		try{
 			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(generate("hans", Arrays.asList("NNP","VBD","DT", "NN"), "dfs", input));
+			System.out.println(generate("benjamin", Arrays.asList("NNP","VBD","DT","NN"), "dfs", input));
 		}catch(IOException e){
 		  e.printStackTrace();
 		}
@@ -102,8 +104,8 @@ class SentenceGenerator {
 							Sequence newSeq = current.sequenceByAppendingWord(m.lastWord(), m.p);
 							if (newSeq.length() < sentenceSpec.size()) q.add(newSeq);
 							else if (newSeq.p > best.p) best = newSeq;
+							visitedNodes++;
 					}
-					visitedNodes++;
 				}
 			}
 		}
@@ -113,10 +115,42 @@ class SentenceGenerator {
 	private static String dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
+		Stack<Word> maxS;
+		float maxP = 0;
 		Stack<Word> s = new Stack<Word>();
 		s.add(first);
+		
 		while (!s.isEmpty()){
-			s.pop();
+			if (s.size() < sentenceSpec.size()){
+				Word m = s.pop();
+				if (m.dfsLoc < input.size()){
+					for (int i = m.dfsLoc; i < input.size(); i++){
+						Sequence ith = input.get(i);
+						if (m.w.equals(ith.firstWord().w) && m.spec.equals(ith.firstWord().spec) &&
+							ith.lastWord().spec.equals(sentenceSpec.get(s.size()+1))){
+							m.dfsLoc = i+1;
+						    m.dfsP *= ith.p;
+							s.add(m);
+							s.add(ith.lastWord());
+							break;
+						}
+					}
+				}
+			}
+			else {
+				float p = 1;
+				for (Word w: s){p*=w.dfsP;}
+				//System.out.println(p);
+				if (Float.compare(maxP, p) < 0) {
+					maxP = p;
+					maxS = s;
+					System.out.println(maxP);
+					for (Word w: s)System.out.println(w.w);
+				}
+				break;
+			}
+			//s.pop();
+			//for ()
 		}
 		return "";
 	}
