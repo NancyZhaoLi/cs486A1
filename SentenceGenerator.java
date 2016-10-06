@@ -1,6 +1,7 @@
 import java.util.*;
 import java.io.*;
 import java.nio.file.*;
+import java.lang.Math;
 
 class Word {
 	String w;
@@ -8,29 +9,30 @@ class Word {
 
 	//For DFS
 	int dfsLoc;
-	float dfsP;
+	double dfsP;
 
 	public Word(String w, String spec){
-		this.w = w;this.spec = spec;this.dfsLoc=0;this.dfsP=1;
+		this.w = w;
+		this.spec = spec;
 	}
 }
 
 class Sequence {
 	List<Word> words;
-	float p;
+	double p;
 
-	public Sequence(List<Word> words, float p){
+	public Sequence(List<Word> words, double p){
 		this.words = words;
 		this.p = p;
 	}
 
-	int length(){return this.words.size();}
+	int size(){return this.words.size();}
 
 	Word firstWord(){return this.words.get(0);}
 
 	Word lastWord(){return this.words.get(this.words.size()-1);}
 
-	Sequence sequenceByAppendingWord(Word w, float p){
+	Sequence sequenceByAppendingWord(Word w, double p){
 		List<Word> newWords = new ArrayList<Word>(this.words);
 		newWords.add(w);
 		return new Sequence(newWords, this.p * p);
@@ -51,45 +53,88 @@ class Sequence {
 	}
 }
 
+class SequenceMap {
+	private HashMap<String, Double> maxProbabilityForSingleWord = new HashMap<String, Double>();
+	private HashMap<String, ArrayList<Sequence>> data = new HashMap<String, ArrayList<Sequence>>();
+	public double maxProbability = 0;
+
+	public ArrayList<Sequence> get(Word key) {
+	    ArrayList<Sequence> list = data.get(key.w+key.spec);
+	    if (list == null)
+	       data.put(key.w+key.spec, list = new ArrayList<Sequence>());
+	    return list;
+	}
+
+	public Double getMaxProbabilityFor(Word key) {
+	    if (maxProbabilityForSingleWord.get(key.w+key.spec) == null){
+	    	maxProbabilityForSingleWord.put(key.w+key.spec, Double.valueOf(0));
+	    }
+	    return maxProbabilityForSingleWord.get(key.w+key.spec);
+	}
+
+	public void addSequenceToWord(Word key, Sequence value){
+		get(key).add(value);
+		if (getMaxProbabilityFor(key) < value.p){
+			maxProbabilityForSingleWord.put(key.w+key.spec, Double.valueOf(value.p));
+		}
+		if (maxProbability < value.p){
+			maxProbability = value.p;
+		}
+	}
+}
+
 class SentenceGenerator {
+	// a word map to a two word sequence with probability
+	SequenceMap inputMap = new SequenceMap();
+
 	public static void main(String[] args) {
+		SentenceGenerator sg = new SentenceGenerator();
 		try{
 			String input = new String(Files.readAllBytes(Paths.get("input")));
-			System.out.println(generate("benjamin", Arrays.asList("NNP","VBD","DT","NN"), "dfs", input));
+			sg.parse(input); // load the input file
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","NN"), "bfs"));
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","NN"), "dfs"));
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","NN"), "hs"));
+
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP"), "bfs"));
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP"), "dfs"));
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP"), "hs"));
+
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","JJS","NN"), "bfs"));
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","JJS","NN"), "dfs"));
+			System.out.println(sg.generate("benjamin", Arrays.asList("NNP","VBD","DT","JJS","NN"), "hs"));
+
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP","IN","DT","NN"), "bfs"));
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP","IN","DT","NN"), "dfs"));
+			System.out.println(sg.generate("a", Arrays.asList("DT","NN","VBD","NNP","IN","DT","NN"), "hs"));
+
 		}catch(IOException e){
-		  e.printStackTrace();
+		    e.printStackTrace();
 		}
 	}
 
-	private static String generate(String startingWord, List<String> sentenceSpec, 
-								   String searchStrategy, String graph){
-		List<Sequence> input = parse(graph);
+	String generate(String startingWord, List<String> sentenceSpec, String searchStrategy){
 		String s = "Failed to generate";
 		switch (searchStrategy) {
-			case "bfs": s = bfs(startingWord, sentenceSpec, input); break;
-			case "dfs": s = dfs(startingWord, sentenceSpec, input); break;
-			case "hs": s = hs(startingWord, sentenceSpec, input); break;
+			case "bfs": s = bfs(startingWord, sentenceSpec); break;
+			case "dfs": s = dfs(startingWord, sentenceSpec); break;
+			case "hs": s = hs(startingWord, sentenceSpec); break;
 		}
-		return s;	
+		return s;
 	}      
 
-	private static List<Sequence> parse(String input){
-		List<Sequence> pi = new ArrayList<Sequence>();
-
+	void parse(String input){
 		String[] lines = input.split("\\n");
 		for (int i = 0; i < lines.length; i++){
 			String[] words = lines[i].split("/");
 			Word w1 = new Word(words[0], words[1]);
 			Word w2 = new Word(words[3], words[4]);
-			List l = new ArrayList();
-			l.add(w1);l.add(w2);	
-			Sequence s = new Sequence(l,Float.parseFloat(words[6]));
-			pi.add(s);
+			Sequence s = new Sequence(Arrays.asList(w1, w2), Double.parseDouble(words[6]));
+			inputMap.addSequenceToWord(w1, s);
 		}
-		return pi;
 	}
 
-	private static String bfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+	String bfs(String startingWord, List<String> sentenceSpec){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
 		Sequence best = new Sequence(Arrays.asList(first), 0);
@@ -98,16 +143,15 @@ class SentenceGenerator {
 		q.add(new Sequence(Arrays.asList(first), 1));
 		while (!q.isEmpty()){
 			Sequence current = q.remove();
-			if ((current.length() == sentenceSpec.size()) && (current.p >= best.p)) best = current;
-			else {
-				for (Sequence m : input){
-					if (current.lastWord().w.equals(m.firstWord().w) &&
-						current.lastWord().spec.equals(m.firstWord().spec) &&
-						m.lastWord().spec.equals(sentenceSpec.get(current.length()))) {
-							Sequence newSeq = current.sequenceByAppendingWord(m.lastWord(), m.p);
-							if (newSeq.length() < sentenceSpec.size()) q.add(newSeq);
-							else if (newSeq.p > best.p) best = newSeq;
-							visitedNodes++;
+			if (current.size() == sentenceSpec.size()){
+				if (current.p >= best.p){
+					best = current;
+				}
+			} else {
+				for (Sequence m : inputMap.get(current.lastWord())) {
+					if (m.lastWord().spec.equals(sentenceSpec.get(current.size()))) {
+						q.add(current.sequenceByAppendingWord(m.lastWord(), m.p));
+						visitedNodes++;
 					}
 				}
 			}
@@ -115,81 +159,75 @@ class SentenceGenerator {
 		return "\""+best.toStr()+"\" with probability:"+best.p+" total nodes cosidered: "+visitedNodes;
 	}
 
-	private static String dfs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+	String dfs(String startingWord, List<String> sentenceSpec){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
-		Stack<Word> s = new Stack<Word>();
-		Stack<Word> maxS = s;
-		float maxP = 0;
-		s.add(first);
-		
-		while (!s.isEmpty()){
-			if (s.size() < sentenceSpec.size()){
-				Word m = s.pop();
-				if (m.dfsLoc < input.size()){
-					for (int i = m.dfsLoc; i < input.size(); i++){
-						Sequence ith = input.get(i);
-						if (m.w.equals(ith.firstWord().w) && m.spec.equals(ith.firstWord().spec) &&
-							ith.lastWord().spec.equals(sentenceSpec.get(s.size()+1))){
-							m.dfsLoc = i+1;
-						    m.dfsP = ith.p;
-							s.add(m);
-							s.add(ith.lastWord());
-							visitedNodes++;
-							break;
-						}
+		Sequence best = new Sequence(Arrays.asList(first), 0);
+
+		Stack<Sequence> q = new Stack<Sequence>();
+		q.add(new Sequence(Arrays.asList(first), 1));
+		while (!q.isEmpty()){
+			Sequence current = q.pop();
+			if (current.size() == sentenceSpec.size()){
+				if (current.p >= best.p){
+					best = current;
+				}
+			} else {
+				for (Sequence m : inputMap.get(current.lastWord())) {
+					if (m.lastWord().spec.equals(sentenceSpec.get(current.size()))) {
+						q.add(current.sequenceByAppendingWord(m.lastWord(), m.p));
+						visitedNodes++;
 					}
 				}
 			}
-			else {
-				float p = 1;
-				for (Word w: s){p*=w.dfsP;}
-				
-				if (Float.compare(maxP, p) < 0) {
-					maxP = p;
-					maxS = (Stack<Word>)s.clone();
-				}
-				s.pop();
-			}
 		}
-		String rt = "\"";
-		for (Word w: maxS) rt = rt+w.w+" ";
-		return rt+"\" with probability:"+maxP+" total nodes cosidered: "+visitedNodes;
+		return "\""+best.toStr()+"\" with probability:"+best.p+" total nodes cosidered: "+visitedNodes;
 	}
 
-	private class HeuristicEntry {
-		
+	double hfn(Sequence x, List<String> sentenceSpec){
+		// our heuristic is assuming that the distance to the goal is 
+		// (# of nodes) * (the max prabability)  
+		double base = x.p;
+		if (sentenceSpec.size() >= x.size() + 1) {
+			base *= inputMap.getMaxProbabilityFor(x.lastWord());
+		}
+		if (sentenceSpec.size() >= x.size() + 2) {
+			base *= Math.pow(inputMap.maxProbability, ((double)sentenceSpec.size() - x.size() - 1));
+		}
+		return base;
 	}
-	private class HeuristicComparator implements Comparator<String>{
-	    @Override
-	    public int compare(String x, String y) {
-	        // Assume neither string is null. Real code should
-	        // probably be more robust
-	        // You could also just return x.length() - y.length(),
-	        // which would be more efficient.
-	        if (x.length() < y.length())
-	        {
-	            return -1;
-	        }
-	        if (x.length() > y.length())
-	        {
-	            return 1;
-	        }
-	        return 0;
-	    }
-	}
-	private static String hs(String startingWord, List<String> sentenceSpec, List<Sequence> input){
+
+	String hs(String startingWord, List<String> sentenceSpec){
 		int visitedNodes = 1;
 		Word first = new Word(startingWord, sentenceSpec.get(0));
+		Sequence best = new Sequence(Arrays.asList(first), 0);
 
-		Comparator<String> comparator = new StringLengthComparator();
-        PriorityQueue<String> queue = new PriorityQueue<String>(10, comparator);
-        queue.add("short");
-        queue.add("very long indeed");
-        queue.add("medium");
-        while (queue.size() != 0) {
-            System.out.println(queue.remove());
-        }
-		return "";
+		Comparator<Sequence> comparator = new Comparator<Sequence>(){
+		    @Override
+		    public int compare(Sequence x, Sequence y) {
+		    	double hx = hfn(x, sentenceSpec);
+		    	double hy = hfn(y, sentenceSpec);
+		        return Double.compare(hy,hx);
+		    }
+		};
+
+        PriorityQueue<Sequence> q = new PriorityQueue<Sequence>(comparator);
+		q.add(new Sequence(Arrays.asList(first), 1));
+		while (!q.isEmpty()){
+			Sequence current = q.remove();
+			if (current.size() == sentenceSpec.size()){
+				best = current;
+				break;
+			} else {
+				for (Sequence m : inputMap.get(current.lastWord())) {
+					if (m.lastWord().spec.equals(sentenceSpec.get(current.size()))) {
+						Sequence newSeq = current.sequenceByAppendingWord(m.lastWord(), m.p);
+						q.add(newSeq);
+						visitedNodes++;
+					}
+				}
+			}
+		}
+		return "\""+best.toStr()+"\" with probability:"+best.p+" total nodes cosidered: "+visitedNodes;
 	}
 }
